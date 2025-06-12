@@ -4,103 +4,110 @@
   <meta charset="UTF-8">
   <title>Formulário Luminol</title>
   <style>
-    .required { border: 2px solid red; }
-    .asterisk { color: red; margin-left: 3px; }
+    body { font-family: Arial, sans-serif; background: #f7f7f7; padding: 24px; }
+    form { background: #fff; border-radius: 10px; max-width: 480px; margin: auto; box-shadow: 0 2px 10px #ddd; padding: 20px; }
+    label { display: block; margin-top: 16px; }
+    input[type="text"], input[type="number"], input[type="datetime-local"], input[list] {
+      padding: 5px 8px; border-radius: 4px; border: 1px solid #ccc; width: 100%;
+      box-sizing: border-box; margin-top: 2px; margin-bottom: 2px;
+    }
+    input[type="radio"] { margin-left: 8px; margin-right: 2px;}
+    .required { border: 2px solid #e30000 !important; }
+    .asterisk { color: #e30000; margin-left: 3px; }
+    #msg { margin-top: 20px; min-height: 24px; color: #195a01; font-weight: bold;}
+    button { margin-top: 18px; margin-right: 10px; padding: 8px 22px; border-radius: 6px; border: none; background: #2980d1; color: #fff; font-weight: bold; cursor: pointer;}
+    button[type="reset"] { background: #bdbdbd; color: #333;}
+    @media (max-width:600px) { form { max-width: 100%; padding: 10px; } }
   </style>
 </head>
 <body>
-  <h1>Registro de Limpeza - Luminol</h1>
   <form id="formLuminol" autocomplete="off">
+    <h2 style="text-align:center">Registro de Limpeza - Luminol</h2>
+
     <label>Data/Hora
       <input type="datetime-local" id="dataHora" required>
       <span class="asterisk">*</span>
     </label>
-    <br>
     <label>Leito
       <input list="leitos" id="leito" required oninput="filterList('leito', 'leitos')">
       <datalist id="leitos"></datalist>
       <span class="asterisk">*</span>
     </label>
-    <br>
     <label>Grade Cama (Lado Direito)
       <input type="radio" name="gradeCama" value="LIMPO" required> LIMPO
       <input type="radio" name="gradeCama" value="SUJO"> SUJO
       <span class="asterisk">*</span>
     </label>
-    <br>
     <label>Colchão
       <input type="radio" name="colchao" value="LIMPO" required> LIMPO
       <input type="radio" name="colchao" value="SUJO"> SUJO
       <span class="asterisk">*</span>
     </label>
-    <br>
     <label>Campainha
       <input type="radio" name="campainha" value="LIMPO" required> LIMPO
       <input type="radio" name="campainha" value="SUJO"> SUJO
       <span class="asterisk">*</span>
     </label>
-    <br>
     <label>Suporte de Soro
       <input type="radio" name="suporteSoro" value="LIMPO" required> LIMPO
       <input type="radio" name="suporteSoro" value="SUJO"> SUJO
       <span class="asterisk">*</span>
     </label>
-    <br>
     <label>Acionador de Descarga
       <input type="radio" name="acionadorDescarga" value="LIMPO" required> LIMPO
       <input type="radio" name="acionadorDescarga" value="SUJO"> SUJO
       <span class="asterisk">*</span>
     </label>
-    <br>
     <label>Funcionário
       <input list="funcionarios" id="funcionario" required oninput="filterList('funcionario', 'funcionarios')">
       <datalist id="funcionarios"></datalist>
       <span class="asterisk">*</span>
     </label>
-    <br>
     <label>Nº Lacre
       <input type="number" id="lacre" required maxlength="8" oninput="if(this.value.length>8)this.value=this.value.slice(0,8)">
       <span class="asterisk">*</span>
     </label>
-    <br>
     <label>Auditor
       <input list="auditores" id="auditor" required oninput="filterList('auditor', 'auditores')">
       <datalist id="auditores"></datalist>
       <span class="asterisk">*</span>
     </label>
-    <br>
     <label>Observações
-      <input type="text" id="observacoes" maxlength="255">
+      <input type="text" id="observacoes" maxlength="255" placeholder="Máx. 255 caracteres">
     </label>
-    <br><br>
-    <button type="button" onclick="registrar()">Registrar</button>
-    <button type="reset" onclick="limparForm()">Limpar</button>
+    <div style="text-align:center;">
+      <button type="button" onclick="registrar()">Registrar</button>
+      <button type="reset" onclick="limparForm()">Limpar</button>
+    </div>
+    <div id="msg"></div>
   </form>
-  <div id="msg"></div>
+
   <script>
     // Links dos CSVs
     const CSV_LEITOS = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRoMEa2QlZ0biZfF2bLeae_yLS66LERlCA5pRBeKtDk9klZhMvJwY9CBWfMooxXkw/pub?gid=1061656810&single=true&output=csv';
     const CSV_FUNC = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT04W1hMMhwGglMBtrEDJ2l8SwIOCOdc-VWWDVTFx-zreMCiYwIVJyYmEM0BkMkcw/pub?gid=1725317562&single=true&output=csv';
     const CSV_AUDIT = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vR_XnuBemuFwXfWSbmmu4giNi6AMWpL1lwnot3gXePtn-7P7nbONwWNSeSLc0zI5kotvhXoovExk5_x/pub?gid=0&single=true&output=csv';
 
+    // Apps Script endpoint
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxhjL1CRCx6Qo8U0IjLNJOLr0p3A0jShWI7WnmWqbz31NeyS51zfaY7vb16QA9C-pjI/exec';
+
     // Carregar listas dinâmicas dos CSVs
     window.onload = async function() {
       document.getElementById('dataHora').value = (new Date()).toISOString().slice(0,16); // Data atual no formato HTML5
-      await carregaCSV(CSV_LEITOS, 'leitos');
-      await carregaCSV(CSV_FUNC, 'funcionarios');
-      await carregaCSV(CSV_AUDIT, 'auditores');
+      await carregaCSV(CSV_LEITOS, 'leitos', 'nº leito');
+      await carregaCSV(CSV_FUNC, 'funcionarios', 're - colaborador');
+      await carregaCSV(CSV_AUDIT, 'auditores', 're - nome');
     };
 
-    async function carregaCSV(url, datalistId) {
+    // Função genérica para carregar CSV em datalist
+    async function carregaCSV(url, datalistId, nomeColuna) {
       const res = await fetch(url);
       const txt = await res.text();
       const linhas = txt.split('\n');
       const cabecalho = linhas[0].split(',');
-      let col;
-      // Identifica coluna correta
-      if(datalistId == 'leitos') col = cabecalho.indexOf('Nº LEITO');
-      if(datalistId == 'funcionarios') col = cabecalho.indexOf('RE - COLABORADOR');
-      if(datalistId == 'auditores') col = cabecalho.indexOf('RE - NOME');
+      // Busca a coluna pelo nome, ignorando capitalização e espaços extras
+      let col = cabecalho.findIndex(c => c.trim().toLowerCase() === nomeColuna);
+      if (col === -1) col = 0; // fallback: primeira coluna
       const datalist = document.getElementById(datalistId);
       datalist.innerHTML = '';
       for(let i=1; i<linhas.length; i++) {
@@ -114,10 +121,11 @@
     }
 
     function filterList(inputId, datalistId) {
-      // O input já filtra com HTML5, mas você pode melhorar com JS se quiser.
+      // O próprio HTML5 já filtra conforme digita.
+      // Aqui pode ser usado para customizações futuras.
     }
 
-    // Limpar formulário (remover bordas vermelhas)
+    // Limpar formulário (remover bordas vermelhas, msg)
     function limparForm() {
       document.querySelectorAll('.required').forEach(el => el.classList.remove('required'));
       document.getElementById('msg').innerText = '';
@@ -165,21 +173,26 @@
       };
 
       // Enviar para o Apps Script
+      document.getElementById('msg').style.color = "#2980d1";
       document.getElementById('msg').innerText = 'Enviando...';
       try {
-        const resp = await fetch('https://script.google.com/macros/s/AKfycbxhjL1CRCx6Qo8U0IjLNJOLr0p3A0jShWI7WnmWqbz31NeyS51zfaY7vb16QA9C-pjI/exec', {
+        const resp = await fetch(SCRIPT_URL, {
           method: 'POST',
           body: JSON.stringify(dados),
           headers: { 'Content-Type': 'application/json' }
         });
         const res = await resp.json();
         if(res.result === 'success'){
+          document.getElementById('msg').style.color = "#195a01";
           document.getElementById('msg').innerText = 'Registro salvo!';
           document.getElementById('formLuminol').reset();
+          document.getElementById('dataHora').value = (new Date()).toISOString().slice(0,16);
         } else {
+          document.getElementById('msg').style.color = "#e30000";
           document.getElementById('msg').innerText = 'Erro ao registrar!';
         }
       } catch (e) {
+        document.getElementById('msg').style.color = "#e30000";
         document.getElementById('msg').innerText = 'Erro de conexão!';
       }
     }
