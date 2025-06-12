@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Formulário Luminol</title>
+  <style>
+    .required { border: 2px solid red; }
+    .asterisk { color: red; margin-left: 3px; }
+  </style>
+</head>
+<body>
+  <h1>Registro de Limpeza - Luminol</h1>
+  <form id="formLuminol" autocomplete="off">
+    <label>Data/Hora
+      <input type="datetime-local" id="dataHora" required>
+      <span class="asterisk">*</span>
+    </label>
+    <br>
+    <label>Leito
+      <input list="leitos" id="leito" required oninput="filterList('leito', 'leitos')">
+      <datalist id="leitos"></datalist>
+      <span class="asterisk">*</span>
+    </label>
+    <br>
+    <label>Grade Cama (Lado Direito)
+      <input type="radio" name="gradeCama" value="LIMPO" required> LIMPO
+      <input type="radio" name="gradeCama" value="SUJO"> SUJO
+      <span class="asterisk">*</span>
+    </label>
+    <br>
+    <label>Colchão
+      <input type="radio" name="colchao" value="LIMPO" required> LIMPO
+      <input type="radio" name="colchao" value="SUJO"> SUJO
+      <span class="asterisk">*</span>
+    </label>
+    <br>
+    <label>Campainha
+      <input type="radio" name="campainha" value="LIMPO" required> LIMPO
+      <input type="radio" name="campainha" value="SUJO"> SUJO
+      <span class="asterisk">*</span>
+    </label>
+    <br>
+    <label>Suporte de Soro
+      <input type="radio" name="suporteSoro" value="LIMPO" required> LIMPO
+      <input type="radio" name="suporteSoro" value="SUJO"> SUJO
+      <span class="asterisk">*</span>
+    </label>
+    <br>
+    <label>Acionador de Descarga
+      <input type="radio" name="acionadorDescarga" value="LIMPO" required> LIMPO
+      <input type="radio" name="acionadorDescarga" value="SUJO"> SUJO
+      <span class="asterisk">*</span>
+    </label>
+    <br>
+    <label>Funcionário
+      <input list="funcionarios" id="funcionario" required oninput="filterList('funcionario', 'funcionarios')">
+      <datalist id="funcionarios"></datalist>
+      <span class="asterisk">*</span>
+    </label>
+    <br>
+    <label>Nº Lacre
+      <input type="number" id="lacre" required maxlength="8" oninput="if(this.value.length>8)this.value=this.value.slice(0,8)">
+      <span class="asterisk">*</span>
+    </label>
+    <br>
+    <label>Auditor
+      <input list="auditores" id="auditor" required oninput="filterList('auditor', 'auditores')">
+      <datalist id="auditores"></datalist>
+      <span class="asterisk">*</span>
+    </label>
+    <br>
+    <label>Observações
+      <input type="text" id="observacoes" maxlength="255">
+    </label>
+    <br><br>
+    <button type="button" onclick="registrar()">Registrar</button>
+    <button type="reset" onclick="limparForm()">Limpar</button>
+  </form>
+  <div id="msg"></div>
+  <script>
+    // Links dos CSVs
+    const CSV_LEITOS = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRoMEa2QlZ0biZfF2bLeae_yLS66LERlCA5pRBeKtDk9klZhMvJwY9CBWfMooxXkw/pub?gid=1061656810&single=true&output=csv';
+    const CSV_FUNC = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT04W1hMMhwGglMBtrEDJ2l8SwIOCOdc-VWWDVTFx-zreMCiYwIVJyYmEM0BkMkcw/pub?gid=1725317562&single=true&output=csv';
+    const CSV_AUDIT = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vR_XnuBemuFwXfWSbmmu4giNi6AMWpL1lwnot3gXePtn-7P7nbONwWNSeSLc0zI5kotvhXoovExk5_x/pub?gid=0&single=true&output=csv';
+
+    // Carregar listas dinâmicas dos CSVs
+    window.onload = async function() {
+      document.getElementById('dataHora').value = (new Date()).toISOString().slice(0,16); // Data atual no formato HTML5
+      await carregaCSV(CSV_LEITOS, 'leitos');
+      await carregaCSV(CSV_FUNC, 'funcionarios');
+      await carregaCSV(CSV_AUDIT, 'auditores');
+    };
+
+    async function carregaCSV(url, datalistId) {
+      const res = await fetch(url);
+      const txt = await res.text();
+      const linhas = txt.split('\n');
+      const cabecalho = linhas[0].split(',');
+      let col;
+      // Identifica coluna correta
+      if(datalistId == 'leitos') col = cabecalho.indexOf('Nº LEITO');
+      if(datalistId == 'funcionarios') col = cabecalho.indexOf('RE - COLABORADOR');
+      if(datalistId == 'auditores') col = cabecalho.indexOf('RE - NOME');
+      const datalist = document.getElementById(datalistId);
+      datalist.innerHTML = '';
+      for(let i=1; i<linhas.length; i++) {
+        let celulas = linhas[i].split(',');
+        if (celulas[col] && celulas[col].trim()) {
+          let opt = document.createElement('option');
+          opt.value = celulas[col].trim();
+          datalist.appendChild(opt);
+        }
+      }
+    }
+
+    function filterList(inputId, datalistId) {
+      // O input já filtra com HTML5, mas você pode melhorar com JS se quiser.
+    }
+
+    // Limpar formulário (remover bordas vermelhas)
+    function limparForm() {
+      document.querySelectorAll('.required').forEach(el => el.classList.remove('required'));
+      document.getElementById('msg').innerText = '';
+    }
+
+    // Validação e envio
+    async function registrar() {
+      limparForm();
+      let ok = true;
+      let campos = [
+        {id:'dataHora'}, {id:'leito'},
+        {name:'gradeCama'}, {name:'colchao'},
+        {name:'campainha'}, {name:'suporteSoro'},
+        {name:'acionadorDescarga'},
+        {id:'funcionario'}, {id:'lacre'}, {id:'auditor'}
+      ];
+
+      for(let campo of campos){
+        let el;
+        if(campo.id) el = document.getElementById(campo.id);
+        if(campo.name) el = document.querySelector('input[name="'+campo.name+'"]:checked');
+        if(!el || (el.value=='')) {
+          if(campo.id) document.getElementById(campo.id).classList.add('required');
+          ok = false;
+        }
+      }
+      if(!ok){
+        document.getElementById('msg').innerText = 'Preencha todos os campos obrigatórios!';
+        return;
+      }
+
+      // Montar objeto para envio
+      const dados = {
+        'DATA_HORA': document.getElementById('dataHora').value.replace('T',' ') + ':00',
+        'LEITO': document.getElementById('leito').value,
+        'GRADE_CAMA': document.querySelector('input[name="gradeCama"]:checked').value,
+        'COLCHAO': document.querySelector('input[name="colchao"]:checked').value,
+        'CAMPAINHA': document.querySelector('input[name="campainha"]:checked').value,
+        'SUPORTE_SORO': document.querySelector('input[name="suporteSoro"]:checked').value,
+        'ACIONADOR_DESCARGA': document.querySelector('input[name="acionadorDescarga"]:checked').value,
+        'FUNCIONARIO': document.getElementById('funcionario').value,
+        'N_LACRE': document.getElementById('lacre').value,
+        'AUDITOR': document.getElementById('auditor').value,
+        'OBSERVACOES': document.getElementById('observacoes').value
+      };
+
+      // Enviar para o Apps Script
+      document.getElementById('msg').innerText = 'Enviando...';
+      try {
+        const resp = await fetch('https://script.google.com/macros/s/AKfycbxhjL1CRCx6Qo8U0IjLNJOLr0p3A0jShWI7WnmWqbz31NeyS51zfaY7vb16QA9C-pjI/exec', {
+          method: 'POST',
+          body: JSON.stringify(dados),
+          headers: { 'Content-Type': 'application/json' }
+        });
+        const res = await resp.json();
+        if(res.result === 'success'){
+          document.getElementById('msg').innerText = 'Registro salvo!';
+          document.getElementById('formLuminol').reset();
+        } else {
+          document.getElementById('msg').innerText = 'Erro ao registrar!';
+        }
+      } catch (e) {
+        document.getElementById('msg').innerText = 'Erro de conexão!';
+      }
+    }
+  </script>
+</body>
+</html>
