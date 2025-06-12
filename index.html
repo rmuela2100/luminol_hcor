@@ -84,14 +84,13 @@
 
   <script>
     // Links dos CSVs
-    const CSV_LEITOS = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRoMEa2QlZ0biZfF2bLeae_yLS66LERlCA5pRBeKtDk9klZhMvJwY9CBWfMooxXkw/pub?gid=1061656810&single=true&output=csv';
-    const CSV_FUNC = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT04W1hMMhwGglMBtrEDJ2l8SwIOCOdc-VWWDVTFx-zreMCiYwIVJyYmEM0BkMkcw/pub?gid=1725317562&single=true&output=csv';
-    const CSV_AUDIT = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vR_XnuBemuFwXfWSbmmu4giNi6AMWpL1lwnot3gXePtn-7P7nbONwWNSeSLc0zI5kotvhXoovExk5_x/pub?gid=0&single=true&output=csv';
+    const CSV_LEITOS = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRtYPG-yfalrBgnxv8dp6gr43LXLpmXbxAQ2eJcM10OKxZ0yxgq1sMn8HZEKeZcz7uWOVrOfzzqYYKe/pub?gid=1061656810&single=true&output=csv';
+    const CSV_FUNC = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQhOLOAV99MT6nLOhGkO0EZWq-AnbGQO-KNjKVXNQ_oMxmWi0xQMmOOfkIuiCRs-Op_ENV1nVnXKmCi/pub?gid=1725317562&single=true&output=csv';
+    const CSV_AUDIT = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRv0KyQ5eTLttu0FSi_dIyoW7txOX_SOIVRmL5Pp8BSjXDs0frPYSw7TQ159GhwRPl8XMxwufkaXl3v/pub?gid=760632349&single=true&output=csv';
 
     // Apps Script endpoint
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxhjL1CRCx6Qo8U0IjLNJOLr0p3A0jShWI7WnmWqbz31NeyS51zfaY7vb16QA9C-pjI/exec';
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw8WX4e3T_-TDn8JL6y1-h9JdH1X66_hfEPQrm6rD1iCdxkbGOTUBB7_gqjHEa6vwkt/exec';
 
-    // Carregar listas dinâmicas dos CSVs
     window.onload = async function() {
       document.getElementById('dataHora').value = (new Date()).toISOString().slice(0,16); // Data atual no formato HTML5
       await carregaCSV(CSV_LEITOS, 'leitos', 'nº leito');
@@ -99,13 +98,11 @@
       await carregaCSV(CSV_AUDIT, 'auditores', 're - nome');
     };
 
-    // Função genérica para carregar CSV em datalist
     async function carregaCSV(url, datalistId, nomeColuna) {
       const res = await fetch(url);
       const txt = await res.text();
       const linhas = txt.split('\n');
       const cabecalho = linhas[0].split(',');
-      // Busca a coluna pelo nome, ignorando capitalização e espaços extras
       let col = cabecalho.findIndex(c => c.trim().toLowerCase() === nomeColuna);
       if (col === -1) col = 0; // fallback: primeira coluna
       const datalist = document.getElementById(datalistId);
@@ -121,17 +118,14 @@
     }
 
     function filterList(inputId, datalistId) {
-      // O próprio HTML5 já filtra conforme digita.
-      // Aqui pode ser usado para customizações futuras.
+      // HTML5 já filtra, função mantida para customização futura.
     }
 
-    // Limpar formulário (remover bordas vermelhas, msg)
     function limparForm() {
       document.querySelectorAll('.required').forEach(el => el.classList.remove('required'));
       document.getElementById('msg').innerText = '';
     }
 
-    // Validação e envio
     async function registrar() {
       limparForm();
       let ok = true;
@@ -157,7 +151,6 @@
         return;
       }
 
-      // Montar objeto para envio
       const dados = {
         'DATA_HORA': document.getElementById('dataHora').value.replace('T',' ') + ':00',
         'LEITO': document.getElementById('leito').value,
@@ -172,7 +165,6 @@
         'OBSERVACOES': document.getElementById('observacoes').value
       };
 
-      // Enviar para o Apps Script
       document.getElementById('msg').style.color = "#2980d1";
       document.getElementById('msg').innerText = 'Enviando...';
       try {
